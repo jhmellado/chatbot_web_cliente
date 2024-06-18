@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chatbot</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <h1>Chatbot</h1>
+    <main>
+      <ul>
+        <li class="message bot">
+          <span>GPT</span>
+          <span>Respuesta del bot</span>
+        </li>
+        <li class="message user">
+          <span>Tú</span>
+          <span>Mensaje del usuario</span>
+        </li>
+      </ul>
+    </main>
+    <form>
+      <input type="text" placeholder="Escribe tu mensaje aquí" />
+      <button disabled>Enviar</button>
+    </form>
+    <small> &nbsp; </small>
+    <template id="message-template">
+      <li class="message">
+        <span></span>
+        <span></span>
+      </li>
+    </template>
+  </body>
+
+  <script type="module" src="main.js"></script>
+</html>
