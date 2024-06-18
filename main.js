@@ -6,6 +6,9 @@ const $message_template = document.querySelector("#message-template");
 const $container = document.querySelector("main");
 const $messages = $container.querySelector("ul");
 const $loading = document.querySelector("small");
+const $button = document.querySelector("button");
+
+$button.setAttribute("disabled", true);
 
 const SELECT_MODEL = "gemma-2b-it-q4f32_1-MLC";
 
@@ -16,7 +19,7 @@ const engine = await CreateMLCEngine(SELECT_MODEL, {
     console.log(info);
     $loading.textContent = `${info.text}`;
     if (info.progress === 1) {
-      $form.querySelector("button").disabled = false;
+      $button.removeAttribute("disabled");
     }
   },
 });
@@ -27,20 +30,39 @@ $form.addEventListener("submit", async (e) => {
   if (message.length) {
     $input.value = "";
   }
+
   addMessage(message, "user");
-
-  const reply = await engine.chat.completions.create({
-    messages: [...messages, { role: "user", content: message }],
-    max_tokens: 100,
-    temperature: 0.5,
-  });
-
-  addMessage(reply.choices[0].message.content, "bot");
   messages.push({ role: "user", content: message });
-  messages.push({
-    role: "assistant",
-    content: reply.choices[0].message.content,
+
+  const chunks = await engine.chat.completions.create({
+    messages: messages,
+    stream: true,
   });
+
+  let reply = "";
+
+  const $botMessage = addMessage("", "bot");
+
+  for await (const chunk of chunks) {
+    const [choice]  = chunk.choices
+    console.log(chunk);
+    reply += choice?.delta?.content ?? "";
+    $botMessage.textContent = reply;
+  }
+
+  messages.push({ role: "assistant", content: reply });
+
+  // const reply = await engine.chat.completions.create({
+  //   messages: messages,
+  // });
+
+  // addMessage(reply.choices[0].message.content, "bot");
+  // messages.push({
+  //   role: "assistant",
+  //   content: reply.choices[0].message.content,
+  // }); https://youtu.be/HvoiF1MCPGs?si=GfRkpASUxP283kyi&t=4554
+
+  console.log(messages);
 });
 
 function addMessage(text, sender) {
@@ -55,4 +77,6 @@ function addMessage(text, sender) {
   $messages.appendChild(template);
 
   $container.scrollTop = $container.scrollHeight;
+
+  return $text;
 }
