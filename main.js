@@ -1,4 +1,4 @@
-import { CreateMLCEngine } from "https://esm.run/@mlc-ai/web-llm";
+import { CreateWebWorkerMLCEngine  } from "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.46/+esm";
 
 const $form = document.querySelector("form");
 const $input = $form.querySelector("input");
@@ -10,19 +10,24 @@ const $button = document.querySelector("button");
 
 $button.setAttribute("disabled", true);
 
-const SELECT_MODEL = "gemma-2b-it-q4f32_1-MLC";
 
 let messages = [];
 
-const engine = await CreateMLCEngine(SELECT_MODEL, {
-  initProgressCallback: (info) => {
-    console.log(info);
-    $loading.textContent = `${info.text}`;
-    if (info.progress === 1) {
-      $button.removeAttribute("disabled");
-    }
-  },
-});
+const SELECT_MODEL = "gemma-2b-it-q4f32_1-MLC";
+
+const engine = await CreateWebWorkerMLCEngine(
+  new Worker("/worker.js",{ type: "module" }),
+  SELECT_MODEL,
+  {
+    initProgressCallback: (info) => {
+      console.log(info);
+      $loading.textContent = `${info.text}`;
+      if (info.progress === 1) {
+        $button.removeAttribute("disabled");
+      }
+    },
+  }
+);
 
 $form.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -44,23 +49,14 @@ $form.addEventListener("submit", async (e) => {
   const $botMessage = addMessage("", "bot");
 
   for await (const chunk of chunks) {
-    const [choice]  = chunk.choices
+    const [choice] = chunk.choices;
     console.log(chunk);
     reply += choice?.delta?.content ?? "";
     $botMessage.textContent = reply;
+    $container.scrollTop = $container.scrollHeight;
   }
 
   messages.push({ role: "assistant", content: reply });
-
-  // const reply = await engine.chat.completions.create({
-  //   messages: messages,
-  // });
-
-  // addMessage(reply.choices[0].message.content, "bot");
-  // messages.push({
-  //   role: "assistant",
-  //   content: reply.choices[0].message.content,
-  // }); https://youtu.be/HvoiF1MCPGs?si=GfRkpASUxP283kyi&t=4554
 
   console.log(messages);
 });
